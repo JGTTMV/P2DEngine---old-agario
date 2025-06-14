@@ -1,0 +1,538 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace P2DEngine
+{
+    public class Agario : myGame
+    {
+        Player player;
+        List<Enemy> enemies = new List<Enemy>(); // List to manage multiple enemies
+        int enemyCount = 10; // Number of enemies to spawn
+
+        myObjective Food;
+        myObjective FoodA;
+        myObjective FoodB;
+        myObjective FoodC;
+
+        Random rand = new Random();
+
+        float playerSpeed = 0.6f;
+        float baseStep = 30;
+        float enemyStep = 30;
+        float playerCenterX;
+        float playerCenterY;
+
+        float sizeFactor;
+        float targetZoom;
+
+        private bool debugMode = true;
+        private float debugTimer = 0.0f;
+        private const float debugInterval = 0.5f;
+
+        private float playerDistance = 0.0f;
+
+        int pistaX = 100;
+        int pistaY = 100;
+        int pistaAncho = 900;
+        int pistaAlto = 900;
+        int grosorBorde = 20;
+        int randomX;
+        int randomY;
+        int foodCount;
+        int foodSpeciaACount;
+        int foodSpeciaBCount;
+        int foodSpeciaCCount;
+
+        private const int maxScore = 25;
+        private bool isGameOver = false;
+
+        private bool isInvulnerable = false;
+        private float invulnerabilityTimer = 0.0f;
+        private float speedBoostTimer = 0.0f;
+        private float originalSpeed;
+
+        public Agario(int width, int height, int FPS, myCamera c) : base(width, height, FPS, c)
+        {
+            currentCamera = new myCamera(0, 0, 800, 600, 1.0f);
+            currentCamera.SetTargetPlayer(player);
+
+            Color colorBorde = Color.DarkGray;
+
+            player = new Player(pistaX + pistaAncho / 2, pistaY + pistaAlto / 2, 20, 20, Color.Red);
+
+            Instantiate(new myBlock(pistaX, pistaY, pistaAncho, grosorBorde, colorBorde));
+            Instantiate(new myBlock(pistaX, pistaY + pistaAlto - grosorBorde, pistaAncho, grosorBorde, colorBorde));
+            Instantiate(new myBlock(pistaX, pistaY, grosorBorde, pistaAlto, colorBorde));
+            Instantiate(new myBlock(pistaX + pistaAncho - grosorBorde, pistaY, grosorBorde, pistaAlto, colorBorde));
+
+            foodCount = 50;
+
+            for (int i = 0; i < foodCount; i++)
+            {
+                randomX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                randomY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+
+                Food = new myObjective(randomX, randomY, 10, 10, Color.Yellow, true);
+                Instantiate(Food);
+            }
+
+            foodSpeciaACount = 5;
+
+            for (int i = 0; i < foodSpeciaACount; i++)
+            {
+                randomX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                randomY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+
+                FoodA = new myObjective(randomX, randomY, 15, 15, Color.Green, true);
+                Instantiate(FoodA);
+            }
+            foodSpeciaBCount = 5;
+
+            for (int i = 0; i < foodSpeciaBCount; i++)
+            {
+                randomX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                randomY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+                FoodB = new myObjective(randomX, randomY, 20, 20, Color.Red, true);
+                Instantiate(FoodB);
+            }
+
+            foodSpeciaCCount = 5;
+
+            for (int i = 0; i < foodSpeciaCCount; i++)
+            {
+                randomX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                randomY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+                FoodC = new myObjective(randomX, randomY, 5, 5, Color.Blue, true);
+                Instantiate(FoodC);
+            }
+
+            Instantiate(player);
+
+            // Initialize multiple enemies
+            for (int i = 0; i < enemyCount; i++)
+            {
+                int enemyX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                int enemyY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+                int enemySize = rand.Next(10, 30); // Random size for enemies
+                Color enemyColor;
+
+                // Ensure enemy color is not the same as the player's color
+                do
+                {
+                    enemyColor = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+                } while (enemyColor == player.brush.Color);
+
+                Enemy newEnemy = new Enemy(enemyX, enemyY, enemySize, enemySize, enemyColor);
+                enemies.Add(newEnemy);
+                Instantiate(newEnemy);
+            }
+        }
+
+        private bool IsColliding(myGameObject a, myGameObject b)
+        {
+            float aLeft = a.x;
+            float aRight = a.x + a.sizeX;
+            float aTop = a.y;
+            float aBottom = a.y + a.sizeY;
+
+            float bLeft = b.x;
+            float bRight = b.x + b.sizeX;
+            float bTop = b.y;
+            float bBottom = b.y + b.sizeY;
+
+            return (aRight > bLeft && aLeft < bRight && aBottom > bTop && aTop < bBottom);
+        }
+
+        private bool WillCollide(Player player, int deltaX, int deltaY)
+        {
+            float newX = player.x + deltaX;
+            float newY = player.y + deltaY;
+
+            Rectangle playerRect = new Rectangle((int)newX, (int)newY, (int)player.sizeX, (int)player.sizeY);
+
+            foreach (var obj in gameObjects)
+            {
+                if (obj is myBlock block && !(block is Player) && !(block is myObstacle) && !(block is myObjective))
+                {
+                    Rectangle blockRect = new Rectangle((int)block.x, (int)block.y, (int)block.sizeX, (int)block.sizeY);
+                    if (playerRect.IntersectsWith(blockRect))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        protected override void ProcessInput()
+        {
+            if (isGameOver)
+                return;
+
+            if (myInputManager.IsKeyPressed(Keys.W) && !WillCollide(player, 0, -(int)(baseStep * player.speed)))
+            {
+                player.y -= (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.A) && !WillCollide(player, -(int)(baseStep * player.speed), 0))
+            {
+                player.x -= (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.S) && !WillCollide(player, 0, (int)(baseStep * player.speed)))
+            {
+                player.y += (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.D) && !WillCollide(player, (int)(baseStep * player.speed), 0))
+            {
+                player.x += (int)(baseStep * player.speed);
+            }
+
+            if (myInputManager.IsKeyPressed(Keys.Up) && !WillCollide(player, 0, -(int)(baseStep * player.speed)))
+            {
+                player.y -= (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.Left) && !WillCollide(player, -(int)(baseStep * player.speed), 0))
+            {
+                player.x -= (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.Down) && !WillCollide(player, 0, (int)(baseStep * player.speed)))
+            {
+                player.y += (int)(baseStep * player.speed);
+            }
+            if (myInputManager.IsKeyPressed(Keys.Right) && !WillCollide(player, (int)(baseStep * player.speed), 0))
+            {
+                player.x += (int)(baseStep * player.speed);
+            }
+        }
+
+        void PlayerGrowth()
+        {
+            // Reduce growth amount from 2 to 1 for normal food
+            player.sizeX += 1;
+            player.sizeY += 1;
+            baseStep -= 0.05f; // Reduce speed penalty from 0.1f to 0.05f
+
+            if (baseStep < 1) baseStep = 1;
+        }
+
+        protected override void RenderGame(Graphics g)
+        {
+            g.FillRectangle(new SolidBrush(Color.Black), 0, 0, windowWidth, windowHeight);
+
+            foreach (var gameObject in gameObjects)
+            {
+                gameObject.Draw(g,
+                    currentCamera.GetViewPosition(gameObject.x, gameObject.y),
+                    currentCamera.GetViewSize(gameObject.sizeX, gameObject.sizeY));
+            }
+        }
+
+        public static float Lerp(float value1, float value2, float amount)
+        {
+            return value1 + (value2 - value1) * amount;
+        }
+
+        protected override void Update()
+        {
+            if (isGameOver)
+                return;
+
+            debugTimer += deltaTime;
+
+            // Handle invulnerability timer
+            if (isInvulnerable)
+            {
+                invulnerabilityTimer -= deltaTime;
+                if (invulnerabilityTimer <= 0)
+                {
+                    isInvulnerable = false;
+                    player.SetColor(Color.Red); // Reset player color
+                    Console.WriteLine("Invulnerability effect ended.");
+                }
+            }
+
+            // Handle speed boost timer
+            if (speedBoostTimer > 0)
+            {
+                speedBoostTimer -= deltaTime;
+                if (speedBoostTimer <= 0)
+                {
+                    player.speed = originalSpeed; // Reset speed
+                    player.SetColor(Color.Red); // Reset player color
+                    Console.WriteLine("Speed boost effect ended.");
+                }
+            }
+
+            sizeFactor = (player.sizeX + player.sizeY) / 40.0f;
+            targetZoom = Math.Max(0.5f, Math.Min(1.5f, 1.0f / sizeFactor));
+
+            currentCamera.zoom = Lerp(currentCamera.zoom, targetZoom, 0.05f);
+
+            playerCenterX = player.x + player.sizeX / 2;
+            playerCenterY = player.y + player.sizeY / 2;
+
+            currentCamera.x = playerCenterX - (windowWidth / (2 * currentCamera.zoom));
+            currentCamera.y = playerCenterY - (windowHeight / (2 * currentCamera.zoom));
+
+            List<myObjective> foodToRemove = new List<myObjective>();
+
+            // First check for special food items (prioritize them)
+            foreach (var gameObject in gameObjects)
+            {
+                if (gameObject is myObjective food && 
+                    (food.brush.Color == Color.Green || food.brush.Color == Color.Red || food.brush.Color == Color.Blue))
+                {
+                    if (IsColliding(player, food))
+                    {
+                        // Apply effects based on food color
+                        if (food.brush.Color == Color.Green) // FoodA - Teleport
+                        {
+                            // Limit teleport distance to prevent extreme teleports
+                            int maxTeleportDistance = 300;
+                            int currentX = (int)player.x;
+                            int currentY = (int)player.y;
+                            
+                            // Generate a more controlled random position within maxTeleportDistance
+                            int newX = currentX + rand.Next(-maxTeleportDistance, maxTeleportDistance);
+                            int newY = currentY + rand.Next(-maxTeleportDistance, maxTeleportDistance);
+                            
+                            // Ensure the new position is within bounds
+                            newX = Math.Max(pistaX + grosorBorde, Math.Min(pistaX + pistaAncho - grosorBorde - (int)player.sizeX, newX));
+                            newY = Math.Max(pistaY + grosorBorde, Math.Min(pistaY + pistaAlto - grosorBorde - (int)player.sizeY, newY));
+                            
+                            player.x = newX;
+                            player.y = newY;
+                            Console.WriteLine($"Player teleported from ({currentX},{currentY}) to ({newX},{newY})");
+                        }
+                        else if (food.brush.Color == Color.Red) // FoodB - Invulnerability
+                        {
+                            // Reduce invulnerability duration from 5 to 3 seconds
+                            isInvulnerable = true;
+                            invulnerabilityTimer = 3.0f; 
+                            player.SetColor(Color.Gold);
+                            Console.WriteLine("Player granted shorter invulnerability (3s) by FoodB.");
+                        }
+                        else if (food.brush.Color == Color.Blue) // FoodC - Speed Boost
+                        {
+                            // Reduce speed boost from 50% to 30% and duration from 5 to 3 seconds
+                            originalSpeed = player.speed;
+                            player.speed *= 1.3f;
+                            speedBoostTimer = 3.0f;
+                            player.SetColor(Color.Cyan);
+                            Console.WriteLine("Player granted smaller speed boost (30% for 3s) by FoodC.");
+                        }
+
+                        // Still provide some growth but less than regular food
+                        player.sizeX += 0.5f;
+                        player.sizeY += 0.5f;
+                        
+                        foodToRemove.Add(food);
+                    }
+                }
+            }
+
+            // Then check for normal food
+            if (foodToRemove.Count == 0) // Only process normal food if no special food was consumed
+            {
+                foreach (var gameObject in gameObjects)
+                {
+                    if (gameObject is myObjective food && food.brush.Color == Color.Yellow)
+                    {
+                        if (IsColliding(player, food))
+                        {
+                            PlayerGrowth(); // Apply the nerfed growth
+                            foodToRemove.Add(food);
+                        }
+                    }
+                }
+            }
+
+            foreach (var food in foodToRemove)
+            {
+                Destroy(food);
+                Console.WriteLine($"Food removed: {food.brush.Color}");
+
+                do
+                {
+                    randomX = rand.Next(pistaX + grosorBorde, pistaX + pistaAncho - grosorBorde);
+                    randomY = rand.Next(pistaY + grosorBorde, pistaY + pistaAlto - grosorBorde);
+                } while (Math.Abs(randomX - player.x) < player.sizeX * 2 && Math.Abs(randomY - player.y) < player.sizeY * 2);
+
+                Instantiate(new myObjective(randomX, randomY, (int)food.sizeX, (int)food.sizeY, food.brush.Color, true));
+            }
+
+            // Update enemies
+            List<Enemy> enemiesToRemove = new List<Enemy>();
+            List<Enemy> enemyCollisionCheck = new List<Enemy>(enemies);
+
+            foreach (var enemy in enemies)
+            {
+                // Update enemy movement
+                enemy.Update(deltaTime);
+
+                // Check collision with map borders and bounce
+                if (enemy.x <= pistaX + grosorBorde)
+                {
+                    enemy.x = pistaX + grosorBorde;
+                    enemy.ReverseXDirection();
+                }
+                else if (enemy.x + enemy.sizeX >= pistaX + pistaAncho - grosorBorde)
+                {
+                    enemy.x = pistaX + pistaAncho - grosorBorde - enemy.sizeX;
+                    enemy.ReverseXDirection();
+                }
+
+                if (enemy.y <= pistaY + grosorBorde)
+                {
+                    enemy.y = pistaY + grosorBorde;
+                    enemy.ReverseYDirection();
+                }
+                else if (enemy.y + enemy.sizeY >= pistaY + pistaAlto - grosorBorde)
+                {
+                    enemy.y = pistaY + pistaAlto - grosorBorde - enemy.sizeY;
+                    enemy.ReverseYDirection();
+                }
+
+                // Check collision with player
+                if (IsColliding(player, enemy))
+                {
+                    // Calculate areas to determine who eats whom - use area comparison for more accurate size comparison
+                    float playerArea = player.sizeX * player.sizeY;
+                    float enemyArea = enemy.sizeX * enemy.sizeY;
+                    
+                    // Reduced threshold from 10% to 5% difference for more balanced gameplay
+                    if (playerArea > enemyArea * 1.05) // Player must be at least 5% bigger
+                    {
+                        // Player eats the enemy
+                        PlayerGrowth();
+                        enemiesToRemove.Add(enemy);
+                        Console.WriteLine($"Player ate an enemy of size {enemy.sizeX}x{enemy.sizeY}!");
+                    }
+                    else if (enemyArea > playerArea * 1.05 && !isInvulnerable) // Enemy must be at least 5% bigger
+                    {
+                        // Enemy eats the player
+                        isGameOver = true;
+                        Console.WriteLine($"Game Over! Player was eaten by an enemy of size {enemy.sizeX}x{enemy.sizeY}!");
+                        return;
+                    }
+                    // If sizes are within 5% of each other, they just bounce
+                    else 
+                    {
+                        // Simple bounce effect for similar-sized entities
+                        enemy.ReverseXDirection();
+                        enemy.ReverseYDirection();
+                    }
+                }
+
+                // Remove this enemy from collision check list to avoid duplicate checks
+                enemyCollisionCheck.Remove(enemy);
+
+                // Check collisions with other enemies (they don't eat each other, just bounce)
+                foreach (var otherEnemy in enemyCollisionCheck)
+                {
+                    if (IsColliding(enemy, otherEnemy))
+                    {
+                        // Simple collision resolution - reverse directions
+                        enemy.ReverseXDirection();
+                        enemy.ReverseYDirection();
+                        otherEnemy.ReverseXDirection();
+                        otherEnemy.ReverseYDirection();
+                    }
+                }
+            }
+
+            // Remove eaten enemies and spawn new ones
+            foreach (var enemy in enemiesToRemove)
+            {
+                Destroy(enemy);
+                enemies.Remove(enemy);
+                SpawnNewEnemy();
+            }
+
+            if (debugTimer >= debugInterval && debugMode)
+            {
+                Console.Clear();
+
+                Console.WriteLine($"Player size: {player.sizeX:F1} x {player.sizeY:F1}");
+                Console.WriteLine($"Player speed: {baseStep:F2} (modifier: {player.speed:F2})");
+                Console.WriteLine($"Invulnerability: {(isInvulnerable ? $"Active ({invulnerabilityTimer:F1}s left)" : "Inactive")}");
+                Console.WriteLine($"Speed boost: {(speedBoostTimer > 0 ? $"Active ({speedBoostTimer:F1}s left)" : "Inactive")}");
+                Console.WriteLine($"Position: ({player.x:F0}, {player.y:F0})");
+
+                debugTimer = 0.0f;
+            }
+        }
+
+        private void SpawnNewEnemy()
+        {
+            int minSize = 10;
+            int maxSize = 40;
+            
+            // Generate more varied enemy sizes
+            int enemySize;
+            double sizeChance = rand.NextDouble();
+            
+            if (sizeChance < 0.6) // 60% chance for smaller enemies
+            {
+                enemySize = rand.Next(minSize, (minSize + maxSize) / 2);
+            }
+            else if (sizeChance < 0.9) // 30% chance for medium enemies
+            {
+                enemySize = rand.Next((minSize + maxSize) / 2, (3 * maxSize + minSize) / 4);
+            }
+            else // 10% chance for large enemies
+            {
+                enemySize = rand.Next((3 * maxSize + minSize) / 4, maxSize);
+            }
+            
+            // Find a spawn position away from player
+            int enemyX, enemyY;
+            float minDistanceFromPlayer = 200; // Minimum distance from player
+            int attempts = 0;
+            int maxAttempts = 20; // Prevent infinite loops
+            
+            do
+            {
+                enemyX = rand.Next(pistaX + grosorBorde + 10, pistaX + pistaAncho - grosorBorde - enemySize - 10);
+                enemyY = rand.Next(pistaY + grosorBorde + 10, pistaY + pistaAlto - grosorBorde - enemySize - 10);
+                attempts++;
+                
+                // If we've tried too many times, just use this position anyway
+                if (attempts >= maxAttempts)
+                    break;
+                    
+            } while (Math.Sqrt(Math.Pow(enemyX - player.x, 2) + Math.Pow(enemyY - player.y, 2)) < minDistanceFromPlayer);
+            
+            // Generate color that's different from player and visibly distinct
+            Color enemyColor;
+            Color playerColor = player.brush.Color;
+
+            int colorDiff;
+            do
+            {
+                // Generate vibrant colors for better visibility
+                int r = rand.Next(100, 256); // Avoid too dark colors
+                int g = rand.Next(100, 256);
+                int b = rand.Next(100, 256);
+                enemyColor = Color.FromArgb(r, g, b);
+                
+                // Check if color is too similar to player color
+                colorDiff = Math.Abs(enemyColor.R - playerColor.R) + 
+                           Math.Abs(enemyColor.G - playerColor.G) + 
+                           Math.Abs(enemyColor.B - playerColor.B);
+                           
+            } while (colorDiff < 150); // Ensure colors are visibly different
+            
+            Enemy newEnemy = new Enemy(enemyX, enemyY, enemySize, enemySize, enemyColor);
+            enemies.Add(newEnemy);
+            Instantiate(newEnemy);
+            
+            Console.WriteLine($"New enemy spawned: Size={enemySize}, Position=({enemyX},{enemyY})");
+        }
+    }
+}

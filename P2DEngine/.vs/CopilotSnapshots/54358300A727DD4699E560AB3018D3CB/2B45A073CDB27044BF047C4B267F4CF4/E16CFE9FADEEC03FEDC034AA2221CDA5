@@ -1,0 +1,91 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media.Animation;
+
+namespace P2DEngine
+{
+    // Como puede ver, esta hereda de myBlock y no de myGameObject.
+    public class Enemy : myBlock
+    {
+        public float speed { get; set; } //Se añade una variable de velocidad para controla el movimiento
+
+        private float directionX;
+        private float directionY;
+        private Random rand = new Random();
+        private float moveTimer = 0f;
+        private float changeDirectionInterval;
+
+        public Enemy(float x, float y, float sizeX, float sizeY, Color color) : base((int)x, (int)y, (int)sizeX, (int)sizeY, color)
+        {
+            // Base speed inversely proportional to initial size
+            speed = Math.Max(0.3f, 20.0f / (sizeX + sizeY));
+            
+            // Initialize random movement direction
+            InitializeRandomDirection();
+            
+            // Random interval between direction changes (2-5 seconds)
+            changeDirectionInterval = (float)(rand.NextDouble() * 3 + 2);
+        }
+
+        private void InitializeRandomDirection()
+        {
+            directionX = (float)(rand.NextDouble() * 2 - 1); // Random value between -1 and 1
+            directionY = (float)(rand.NextDouble() * 2 - 1);
+            NormalizeDirection();
+        }
+
+        public override void Draw(Graphics g, Vector position, Vector size)
+        {
+            //Se dibuja como un círculo
+            g.FillEllipse(brush, (float)position.X, (float)position.Y, (float)size.X, (float)size.Y);
+        }
+
+        // Puede tener su propio update, que lo diferencia de los otros myBlock.
+        public override void Update(float deltaTime)
+        {
+            // Occasionally change direction randomly
+            moveTimer += deltaTime;
+            if (moveTimer >= changeDirectionInterval)
+            {
+                // 30% chance to change direction
+                if (rand.NextDouble() < 0.3)
+                {
+                    InitializeRandomDirection();
+                }
+                moveTimer = 0;
+            }
+
+            // Calculate current speed based on size
+            float currentSpeed = Math.Max(0.3f, 20.0f / (sizeX + sizeY)) * speed;
+            
+            // Move enemy based on direction and speed
+            x += directionX * currentSpeed * 30 * deltaTime;
+            y += directionY * currentSpeed * 30 * deltaTime;
+        }
+
+        public void ReverseXDirection()
+        {
+            directionX = -directionX;
+        }
+
+        public void ReverseYDirection()
+        {
+            directionY = -directionY;
+        }
+
+        private void NormalizeDirection()
+        {
+            float magnitude = (float)Math.Sqrt(directionX * directionX + directionY * directionY);
+            if (magnitude > 0)
+            {
+                directionX /= magnitude;
+                directionY /= magnitude;
+            }
+        }
+    }
+}
