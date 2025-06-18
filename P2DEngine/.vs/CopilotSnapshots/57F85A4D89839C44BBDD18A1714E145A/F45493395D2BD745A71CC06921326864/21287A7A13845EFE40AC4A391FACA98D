@@ -1,0 +1,272 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Printing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using P2DEngine.GameObjects;
+using P2DEngine.GameObjects.Collisions;
+using System.Windows.Forms;
+using P2DEngine.Managers;
+using System.Windows;
+using System.Security.Cryptography.X509Certificates;
+using static P2DEngine.myPhysicsBlock;
+
+namespace P2DEngine.Games
+{
+    public class Mariano : myGame
+    {
+        private myPlayer player;
+        private List<myEnemy> turtles;
+        private Image Block;
+        private Image pipeR;
+        private Image pipeL;
+        private List<WallBlock> walls;
+        private int enemysizeX = 30;
+        private int enemysizeY = 50;
+        private Font gameFont;
+        bool onGround = false;
+        private myTeleporter myTeleporterA, myTeleporterB;
+        private myTeleporter myTeleporterC, myTeleporterD;
+
+        public Mariano(int width, int height, int FPS, myCamera c) : base(width, height, FPS, c)
+        {
+            gameFont = new Font("courierFont", 16);
+
+            turtles = new List<myEnemy>();
+
+            Block = myImageManager.Get("Block");
+            pipeR = myImageManager.Get("Pipe_R");
+            pipeL = myImageManager.Get("Pipe_L");
+            player = new myPlayer(100, 500, 40, 60, null); // myPlayer will handle its own sprite loading
+            
+
+            myTeleporterA = new myTeleporter(0, 75, 100, 75, pipeL);
+            myTeleporterB = new myTeleporter(width-100, 75, 100, 75, pipeR);
+            myTeleporterC = new myTeleporter(0, height-125, 100, 75, pipeL);
+            myTeleporterD = new myTeleporter(width-100, height-125, 100, 75, pipeR);
+            SpawnEnemy();
+            Instantiate(player);
+
+            walls = new List<WallBlock>();
+
+            for(int i = 0; i < 21; i++) //Crea el piso
+            {
+                walls.Add(new WallBlock((39 * i), 565, 40, 40, Block));
+            }
+
+            for (int i = 0; i < 7; i++) //Crea el techo A
+            {
+                walls.Add(new WallBlock((39 * i), 395, 40, 40, Block));
+            }
+
+            for(int i = 13; i < 21; i++) //Crea el techo B
+            {
+                walls.Add(new WallBlock((39 * i), 395, 40, 40, Block));
+            }
+
+            for (int i = 8; i < 12; i++) //Crea el techo entremedio
+            {
+                walls.Add(new WallBlock((39 * i), 265, 40, 40, Block));
+            }
+
+            for (int i = 0; i < 7; i++) //Crea el techo C
+            {
+                walls.Add(new WallBlock((39 * i), 155, 40, 40, Block));
+            }
+
+            for (int i = 13; i < 21; i++) //Crea el techo D
+            {
+                walls.Add(new WallBlock((39 * i), 155, 40, 40, Block));
+            }
+
+            foreach (var wall in walls)
+                Instantiate(wall);
+
+            Instantiate(myTeleporterA);
+            Instantiate(myTeleporterB);
+            Instantiate(myTeleporterC);
+            Instantiate(myTeleporterD);
+        }
+
+        public void SpawnEnemy()
+        {
+            turtles.Add(new myEnemy(400, 195, enemysizeX, enemysizeY, null));
+            turtles.Add(new myEnemy(100, 125, enemysizeX, enemysizeY, null));
+            turtles.Add(new myEnemy(600, 125, enemysizeX, enemysizeY, null));
+            turtles.Add(new myEnemy(600, 510, enemysizeX, enemysizeY, null));
+            turtles.Add(new myEnemy(200, 510, enemysizeX, enemysizeY, null));
+
+            foreach (var turtle in turtles)
+                Instantiate(turtle);
+            
+        }
+
+        private void ResolveCollision(myPhysicsGameObject actor, WallBlock wall)
+        {
+            // Calculate how much the player overlaps the wall in each axis
+            float overlapX = Math.Min(actor.x + actor.sizeX, wall.x + wall.sizeX) - Math.Max(actor.x, wall.x);
+            float overlapY = Math.Min(actor.y + actor.sizeY, wall.y + wall.sizeY) - Math.Max(actor.y, wall.y);
+
+            // Resolve the smaller overlap (horizontal or vertical)
+            if (overlapY < overlapX)
+            {
+                // Vertical collision
+                if (actor.y < wall.y)
+                {
+                    // Player is above the wall (landed on floor)
+                    actor.y = wall.y - player.sizeY;
+                    if(actor is myPlayer)
+                    {
+                        player.SetOnGround(true); // Add this method to handle jumping
+                        onGround = true;
+                        actor.velocityY = 0; // If you have velocity
+                    }
+                    else if(actor is myEnemy)
+                    {
+                        ((myEnemy)actor).SetOnGround(true);
+                        onGround = true;
+                        actor.velocityY = 0; // If you have velocity
+                    }
+
+                }
+                else
+                {
+                    // Player hit a ceiling
+                    actor.y = wall.y + wall.sizeY;
+                    onGround = false; // Player is not on the ground anymore|||
+                }
+            }
+            else
+            {
+                // Horizontal collision (optional, for walls)
+                if (actor.x < wall.x)
+                    actor.x = wall.x - actor.sizeX;
+                else
+                    actor.x = wall.x + wall.sizeX;
+            }
+        }
+        private void teleporterCollision(myTeleporter teleporter, myPhysicsGameObject actor)
+        {
+            if (actor.IsColliding(teleporter))
+            {
+                // Teleport the player to the corresponding teleporter
+                if (teleporter == myTeleporterA)
+                {
+                    actor.x = myTeleporterB.x - actor.sizeX;
+                    actor.y = myTeleporterB.y;
+                }
+                else if (teleporter == myTeleporterB)
+                {
+                    actor.x = myTeleporterA.x + myTeleporterB.sizeX;
+                    actor.y = myTeleporterA.y;
+                }
+                else if (teleporter == myTeleporterC)
+                {
+                    actor.x = myTeleporterD.x - actor.sizeX;
+                    actor.y = myTeleporterD.y;
+                }
+                else if (teleporter == myTeleporterD)
+                {
+                    actor.x = myTeleporterC.x + myTeleporterB.sizeX;
+                    actor.y = myTeleporterC.y;
+                }
+            }
+        }
+        protected override void ProcessInput()
+        {
+            //Delegate to player
+            player.UpdateDirection(deltaTime);
+            foreach(var turtle in turtles)
+            {
+                turtle.EnemyMove(deltaTime);
+            }
+        }
+
+        protected override void Update()
+        {
+            var enemiesToDestroy = new List<myEnemy>();
+
+            foreach (var wall in walls)
+            {
+                if (player.IsColliding(wall))
+                {
+                    ResolveCollision(player, wall);
+                }
+                foreach(var turtle in turtles)
+                {
+                    if (turtle.IsColliding(wall))
+                    {
+                        ResolveCollision(turtle, wall);
+                    }
+                }
+            }
+
+            foreach (var turtle in turtles)
+            {
+                if (turtle.IsColliding(player))
+                {
+                    if (player.velocityY > 0 && player.y + player.sizeY >= turtle.y && player.y + player.sizeY <= turtle.y + 10)
+                    {
+                        turtle.isDead = true; // El enemigo muere
+                        enemiesToDestroy.Add(turtle); 
+                        player.score += 10;
+                    }
+                    else
+                    {
+                        Console.WriteLine("player dead"); // Coloca al jugador encima del enemigo
+                    }
+                }
+
+                if (myTeleporterA.IsColliding(turtle) || myTeleporterB.IsColliding(turtle) || myTeleporterC.IsColliding(turtle) || myTeleporterD.IsColliding(turtle))
+                {
+                    teleporterCollision(myTeleporterA, turtle);
+                    teleporterCollision(myTeleporterB, turtle);
+                    teleporterCollision(myTeleporterC, turtle);
+                    teleporterCollision(myTeleporterD, turtle);
+                }
+            }
+
+            if (myTeleporterA.IsColliding(player) || myTeleporterB.IsColliding(player) || myTeleporterC.IsColliding(player) || myTeleporterD.IsColliding(player))
+            {
+                teleporterCollision(myTeleporterA, player);
+                teleporterCollision(myTeleporterB, player);
+                teleporterCollision(myTeleporterC, player);
+                teleporterCollision(myTeleporterD, player);
+            }
+            if (!onGround)
+            {
+                player.SetOnGround(false);
+            }
+
+            foreach (var e in enemiesToDestroy) Destroy(e);
+            turtles.RemoveAll(t => t.isDead);
+        }
+
+        protected override void RenderGame(Graphics g)
+        {
+            
+            g.Clear(Color.SkyBlue);
+
+            foreach (var wall in walls)
+                wall.Draw(g, new Vector(wall.x, wall.y), new Vector(wall.sizeX, wall.sizeY));
+
+            myTeleporterA.Draw(g, new Vector(myTeleporterA.x, myTeleporterA.y), new Vector(myTeleporterA.sizeX, myTeleporterA.sizeY));
+            myTeleporterB.Draw(g, new Vector(myTeleporterB.x, myTeleporterB.y), new Vector(myTeleporterB.sizeX, myTeleporterB.sizeY));
+            myTeleporterC.Draw(g, new Vector(myTeleporterC.x, myTeleporterC.y), new Vector(myTeleporterC.sizeX, myTeleporterC.sizeY));
+            myTeleporterD.Draw(g, new Vector(myTeleporterD.x, myTeleporterD.y), new Vector(myTeleporterD.sizeX, myTeleporterD.sizeY));
+
+            player.Draw(g, new Vector(player.x, player.y), new Vector(player.sizeX, player.sizeY));
+            foreach (var turtle in turtles)
+            {
+                turtle.Draw(g, new Vector(turtle.x, turtle.y), new Vector(turtle.sizeX, turtle.sizeY));
+            }
+
+            g.DrawString($"Vidas: {player.lives}", gameFont, Brushes.White, new PointF(10, 10));
+            g.DrawString($"Puntaje: {player.score}", gameFont, Brushes.White, new PointF(100, 10));
+
+
+        }
+    }
+}

@@ -1,0 +1,125 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\jonat\\Desktop\\P2DEngine\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|c:\\users\\jonat\\desktop\\p2dengine\\games\\mariano.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:games\\mariano.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|C:\\Users\\jonat\\Desktop\\P2DEngine\\gameobjects\\myplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:gameobjects\\myplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|C:\\Users\\jonat\\Desktop\\P2DEngine\\gameobjects\\myenemy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:gameobjects\\myenemy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|C:\\Users\\jonat\\Desktop\\P2DEngine\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|C:\\Users\\jonat\\Desktop\\P2DEngine\\managers\\myinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:managers\\myinputmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|C:\\Users\\jonat\\Desktop\\P2DEngine\\gameobjects\\myteleporter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07B1307C-2C28-4A21-974A-96954E8E9F72}|P2DEngine.csproj|solutionrelative:gameobjects\\myteleporter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Mariano.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Games\\Mariano.cs",
+              "RelativeDocumentMoniker": "Games\\Mariano.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Games\\Mariano.cs",
+              "RelativeToolTip": "Games\\Mariano.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-04T02:39:20.658Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "myPlayer.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myPlayer.cs",
+              "RelativeDocumentMoniker": "GameObjects\\myPlayer.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myPlayer.cs",
+              "RelativeToolTip": "GameObjects\\myPlayer.cs",
+              "ViewState": "AgIAAHYAAAAAAAAAAAAQwI0AAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-04T02:25:36.697Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "myEnemy.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myEnemy.cs",
+              "RelativeDocumentMoniker": "GameObjects\\myEnemy.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myEnemy.cs",
+              "RelativeToolTip": "GameObjects\\myEnemy.cs",
+              "ViewState": "AgIAAEoAAAAAAAAAAAAgwGAAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-06T16:30:23.297Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEAAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-06T01:25:02.294Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "myTeleporter.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myTeleporter.cs",
+              "RelativeDocumentMoniker": "GameObjects\\myTeleporter.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\GameObjects\\myTeleporter.cs",
+              "RelativeToolTip": "GameObjects\\myTeleporter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-05T23:42:07.291Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "myInputManager.cs",
+              "DocumentMoniker": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Managers\\myInputManager.cs",
+              "RelativeDocumentMoniker": "Managers\\myInputManager.cs",
+              "ToolTip": "C:\\Users\\jonat\\Desktop\\P2DEngine\\Managers\\myInputManager.cs",
+              "RelativeToolTip": "Managers\\myInputManager.cs",
+              "ViewState": "AgIAAC8AAAAAAAAAAAAowEMAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-06T00:03:25.458Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

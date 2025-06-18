@@ -1,0 +1,139 @@
+﻿using P2DEngine.Managers;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms;
+
+namespace P2DEngine.GameObjects
+{
+    public class myPlayer : myPhysicsBlock
+    {
+        private mySprite marianoSprite;
+        private float invulnerableTime = 1.0f; //1 segundo de invulnerabilidad inicial
+        private float moveSpeed = 200f; // Velocidad de movimiento
+        public int lives = 3;
+        public int score = 0;
+
+        private bool isFacingRight = true; // Dirección del personaje
+        private bool isWalking = false;
+        private bool isJumping = false;
+
+        private float jumpVelocity = -725f; // Adjust for desired jump height (negative = up in most 2D systems)
+        private float gravity = 1500f;      // Adjust for desired gravity
+        private new float velocityY = 0f;       // Player's vertical speed
+
+        public myPlayer(float x, float y, float sizeX, float sizeY, mySprite sprite)
+            : base(x, y, sizeX, sizeY, Color.Transparent)
+        {
+            // 1. Crear el sprite con las animaciones
+            marianoSprite = new mySprite(0.1f); // Cada frame dura 0.1 segundos
+
+            //Carga la animacion de caminar hacia la derecha
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_R_Walk_1")); //0
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_R_Walk_2")); //1
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_R_Walk_3")); //2
+
+            //Carga la animacion de caminar hacia la izquierda
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_L_Walk_1")); //3
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_L_Walk_2")); //4
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_L_Walk_3")); //5
+
+            //Carga frames de idle, 3 frames iguales para que dure mas
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_R_Idle"), 3); //6
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_L_Idle"), 3); //7
+
+            //Carga frames de salto
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_R_Jump"), 3); //8
+            marianoSprite.AddFrame(myImageManager.Get("Mariano_L_Jump"), 3); //9
+
+            affectedByGravity = true;
+        }
+
+        public override void Draw(Graphics g, Vector position, Vector size)
+        {
+            //Dibuja el sprite correspondiente a la direccion actual
+            if (marianoSprite.GetCurrentFrame() != null)
+            {
+                g.DrawImage(marianoSprite.GetCurrentFrame(), (float)position.X, (float)position.Y, (float)size.X, (float)size.Y);
+            }
+            else
+            {
+                Draw(g, position, size); //Fallback si no hay sprite
+            }
+        }
+        public void SetOnGround(bool onGround)
+        {
+            isJumping = !onGround;
+            if (onGround)
+                velocityY = 0; // Reset vertical velocity when on the ground
+        }
+        public override void UpdateGameObject(float deltaTime)
+        {
+            if (invulnerableTime > 0)
+                invulnerableTime -= deltaTime;
+
+            // Animation selection
+            if (isJumping)
+            {
+                marianoSprite.SetAnimationRange(isFacingRight ? 8 : 9, 1);
+                //No tengo idea de como implementar la animacion de salto
+            }
+            else if (isWalking && !isJumping)
+            {
+                marianoSprite.SetAnimationRange(isFacingRight ? 0 : 3, 3);
+            }
+            else if (!isWalking && !isJumping)
+            {
+                marianoSprite.SetAnimationRange(isFacingRight ? 6 : 7, 1);
+            }
+
+            KeepInBounds(800, 600);
+
+            marianoSprite.Update(deltaTime);
+
+            // Physics/jump update
+            velocityY += gravity * deltaTime;     // Apply gravity
+            y += velocityY * deltaTime;           // Update vertical position
+        }
+
+        public void UpdateDirection(float deltaTime)
+        {
+            isWalking = false;
+            if (myInputManager.IsKeyPressed(Keys.Right) || myInputManager.IsKeyPressed(Keys.D))
+            {
+                x += moveSpeed * deltaTime;
+                isFacingRight = true;
+                isWalking = true;
+            }
+            else if (myInputManager.IsKeyPressed(Keys.Left) || myInputManager.IsKeyPressed(Keys.A))
+            {
+                x -= moveSpeed * deltaTime;
+                isFacingRight = false;
+                isWalking = true;
+            }
+
+            // Solo permite saltar con la flecha hacia arriba
+            if (myInputManager.IsKeyPressed(Keys.Up) && !isJumping)
+            {
+                velocityY = jumpVelocity;
+                y += velocityY * deltaTime;
+                isJumping = true;
+                Console.WriteLine("salto");
+            }
+            //Bloquea cualquier salto con barra espaciadora
+            //(No se hace nada si se presiona Space)
+        }
+
+        //Metodo para mantener al jugador dentro de los limites de la pantalla
+        public void KeepInBounds(float screenWidth, float screenHeight)
+        {
+            if (x < 0) x = 0;
+            if (x + sizeX > screenWidth) x = screenWidth - sizeX;
+            if (y < 0) y = 0;
+        }
+    }
+}
